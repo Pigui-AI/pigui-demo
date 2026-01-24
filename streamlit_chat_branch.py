@@ -376,35 +376,46 @@ def chat_view():
         )
         
         if audio_file is not None:
-            with st.spinner("Transcribing audio..."):
-                audio_bytes = audio_file.read()
-                transcribed_text = transcribe_audio(
-                    audio_bytes,
-                    audio_file.name,
-                    audio_file.type
-                )
-                
-                if transcribed_text:
-                    # Send transcribed text as message
-                    st.session_state.messages.append({
-                        "role": "user",
-                        "content": transcribed_text
-                    })
+            # Create unique identifier for this audio file
+            audio_id = f"{audio_file.name}_{audio_file.size}"
+            
+            # Check if we already processed this audio file
+            if "last_processed_audio" not in st.session_state:
+                st.session_state.last_processed_audio = None
+            
+            if st.session_state.last_processed_audio != audio_id:
+                with st.spinner("Transcribing audio..."):
+                    audio_bytes = audio_file.read()
+                    transcribed_text = transcribe_audio(
+                        audio_bytes,
+                        audio_file.name,
+                        audio_file.type
+                    )
                     
-                    with st.spinner("Pigui is thinking..."):
-                        try:
-                            answer, missing = send_chat()
-                            st.session_state.messages.append({
-                                "role": "assistant",
-                                "content": answer
-                            })
-                            
-                            if missing:
-                                st.caption(f"Missing: {missing}")
-                        except requests.RequestException as exc:
-                            st.error(f"Error: {exc}")
-                    
-                    st.rerun()
+                    if transcribed_text:
+                        # Mark this audio as processed
+                        st.session_state.last_processed_audio = audio_id
+                        
+                        # Send transcribed text as message
+                        st.session_state.messages.append({
+                            "role": "user",
+                            "content": transcribed_text
+                        })
+                        
+                        with st.spinner("Pigui is thinking..."):
+                            try:
+                                answer, missing = send_chat()
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": answer
+                                })
+                                
+                                if missing:
+                                    st.caption(f"Missing: {missing}")
+                            except requests.RequestException as exc:
+                                st.error(f"Error: {exc}")
+                        
+                        st.rerun()
     
     # Text input (always available)
     if user_prompt := st.chat_input("Ask Pigui anything you'd like - I'm here to help!"):
