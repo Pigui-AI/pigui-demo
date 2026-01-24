@@ -1,0 +1,410 @@
+/* Light blue-gray background for all sections */
+.stApp {
+    background-color: #F3F6FA !important;
+}
+
+/* Hide header and sidebar */
+div[data-testid="stHeader"], div[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* Remove black toolbar at top */
+header[data-testid="stHeader"] {
+    background-color: #F3F6FA !important;
+    display: none !important;
+}
+
+/* Hide toolbar completely */
+.stApp > header {
+    background-color: transparent !important;
+    display: none !important;
+}
+
+/* Remove top padding from main content */
+.main .block-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Remove top margin from app */
+.stApp {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Remove spacing from main element */
+.main {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Remove top spacing from first elements */
+.main > div:first-child {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Set background for all containers */
+div[data-testid="stVerticalBlock"],
+div[data-testid="stHorizontalBlock"],
+section[data-testid="stSidebar"],
+.main .block-container {
+    background-color: #F3F6FA !important;
+}
+
+/* Text colors */
+h1, h2, h3, h4, h5, h6 {
+    color: #1E1E1E !important;
+}
+
+p, span, .stMarkdown {
+    color: #333333 !important;
+}
+
+/* Topic Buttons - VERY SMALL font size with maximum specificity */
+.stButton > button[kind="secondary"],
+button[kind="secondary"],
+.stButton button[kind="secondary"],
+div[data-testid="stHorizontalBlock"] button[kind="secondary"],
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+    border: 1px solid #E0E0E0 !important;
+    border-radius: 8px !important;
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.65rem !important;
+    min-height: 40px !important;
+    height: auto !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    line-height: 1.1 !important;
+}
+
+.stButton > button[kind="secondary"]:hover,
+button[kind="secondary"]:hover {
+    border-color: #7E57C2 !important;
+    color: #7E57C2 !important;
+}
+
+.stButton > button[kind="primary"],
+button[kind="primary"],
+.stButton button[kind="primary"],
+div[data-testid="stHorizontalBlock"] button[kind="primary"],
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="primary"] {
+    background-color: #7E57C2 !important;
+    color: white !important;
+    border: 1px solid #7E57C2 !important;
+    border-radius: 8px !important;
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.65rem !important;
+    min-height: 40px !important;
+    height: auto !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    line-height: 1.1 !important;
+}
+
+/* Divider */
+hr.chat-divider {
+    border-top: 1px solid #E0E0E0;
+    margin: 1.5rem 0;
+}
+
+/* Suggestion Buttons - uniform size and smaller text */
+div[data-testid="stVerticalBlock"]:has(div.stButton) .stButton > button {
+    border: 1px solid #D1C4E9 !important;
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+    border-radius: 10px !important;
+    text-align: left !important;
+    padding: 0.6rem 0.8rem !important;
+    font-size: 0.85rem !important;
+    min-height: 45px !important;
+    height: auto !important;
+}
+div[data-testid="stVerticalBlock"]:has(div.stButton) .stButton > button:hover {
+    border-color: #7E57C2 !important;
+    color: #7E57C2 !important;
+}
+
+/* Chat Input - remove black background */
+div[data-testid="stChatInput"] {
+    background-color: #F3F6FA !important;
+    padding: 1rem;
+}
+div[data-testid="stChatInput"] > div {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    border: 2px solid #D0D0D0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+div[data-testid="stChatInput"] > div:hover {
+    border-color: #7E57C2;
+    box-shadow: 0 4px 12px rgba(126, 87, 194, 0.15);
+}
+div[data-testid="stChatInput"] textarea {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+}
+div[data-testid="stChatInput"] input {
+    color: #333333 !important;
+}
+
+/* Make placeholder text visible */
+div[data-testid="stChatInput"] input::placeholder,
+div[data-testid="stChatInput"] textarea::placeholder {
+    color: #888888 !important;
+    opacity: 1 !important;
+}
+
+/* Chat messages container */
+div[data-testid="stChatMessageContainer"] {
+    background-color: #F3F6FA !important;
+}
+
+/* Remove black backgrounds from bottom bar */
+div[data-testid="stBottom"],
+div[data-testid="stBottomBlockContainer"],
+footer {
+    background-color: #F3F6FA !important;
+}
+
+/* Chat message bubbles */
+div[data-testid="stChatMessage"] {
+    background-color: #F3F6FA !important;
+}
+
+/* Remove black background from code blocks in chat */
+div[data-testid="stChatMessage"] code {
+    background-color: #F3F6FA !important;
+    color: #333333 !important;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+}
+
+div[data-testid="stChatMessage"] pre {
+    background-color: #F3F6FA !important;
+    border: 1px solid #E0E0E0 !important;
+    border-radius: 6px;
+    padding: 1rem !important;
+}
+
+div[data-testid="stChatMessage"] pre code {
+    background-color: transparent !important;
+    color: #333333 !important;
+}
+
+/* Make scrollbar visible in chat container */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #E0E0E0;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #A0A0A0;
+    border-radius: 5px;
+    border: 2px solid #E0E0E0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #7E57C2;
+}
+
+/* Specific for chat messages container */
+div[data-baseweb="base-input"] ::-webkit-scrollbar-thumb {
+    background: #B0B0B0;
+}
+
+/* Text inputs for IDs view */
+input[type="text"] {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+    border: 1px solid #E0E0E0 !important;
+    border-radius: 5px !important;
+}
+
+.stTextInput > div > div > input {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+}
+
+.stTextInput label {
+    color: #666666 !important;
+}
+
+/* Fix black background on control buttons */
+button[kind="secondary"],
+button[kind="primary"],
+.stButton button {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
+    border: 1px solid #E0E0E0 !important;
+}
+
+button[kind="primary"] {
+    background-color: #7E57C2 !important;
+    color: white !important;
+    border: 1px solid #7E57C2 !important;
+}
+
+button[kind="secondary"]:hover,
+.stButton button:hover {
+    background-color: #F8F8F8 !important;
+    border-color: #7E57C2 !important;
+    color: #7E57C2 !important;
+}
+
+button[kind="primary"]:hover {
+    background-color: #6A47B0 !important;
+}
+
+/* Remove black background from button containers */
+div[data-testid="column"] button,
+div[data-testid="stHorizontalBlock"] button {
+    background-color: #FFFFFF !important;
+}
+
+/* Fix audio player styling */
+audio {
+    width: 100%;
+    background-color: transparent !important;
+}
+
+/* Remove ALL black from file uploader - comprehensive */
+div[data-testid="stFileUploader"],
+div[data-testid="stFileUploader"] *,
+div[data-testid="stFileUploader"] > div,
+div[data-testid="stFileUploader"] section,
+div[data-testid="stFileUploader"] button {
+    background-color: #F3F6FA !important;
+}
+
+div[data-testid="stFileUploader"] > div > div {
+    background-color: #FFFFFF !important;
+    border: 2px dashed #D0D0D0 !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+}
+
+div[data-testid="stFileUploader"] label,
+div[data-testid="stFileUploader"] p,
+div[data-testid="stFileUploader"] span {
+    color: #666666 !important;
+    background-color: transparent !important;
+}
+
+/* File uploader button */
+div[data-testid="stFileUploader"] button {
+    background-color: #FFFFFF !important;
+    border: 1px solid #E0E0E0 !important;
+    color: #333333 !important;
+}
+
+div[data-testid="stFileUploader"] button:hover {
+    background-color: #F8F8F8 !important;
+    border-color: #7E57C2 !important;
+}
+
+/* Fix expander styling - remove ALL black backgrounds */
+div[data-testid="stExpander"],
+div[data-testid="stExpander"] *,
+details[data-testid="stExpander"],
+details[data-testid="stExpander"] * {
+    background-color: #F3F6FA !important;
+}
+
+div[data-testid="stExpander"] {
+    border: none !important;
+}
+
+details[data-testid="stExpander"] summary {
+    background-color: #FFFFFF !important;
+    border: 1px solid #E0E0E0 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 1rem !important;
+    color: #333333 !important;
+}
+
+details[data-testid="stExpander"] summary:hover {
+    background-color: #F8F8F8 !important;
+    border-color: #7E57C2 !important;
+}
+
+/* Remove black from expander content */
+details[data-testid="stExpander"] > div:not(summary) {
+    background-color: #F3F6FA !important;
+    padding: 1rem !important;
+}
+
+/* Remove black bar when expanded */
+details[data-testid="stExpander"][open] summary {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-bottom: none !important;
+}
+
+details[data-testid="stExpander"][open] > div:last-child {
+    background-color: #F3F6FA !important;
+    border: 1px solid #E0E0E0 !important;
+    border-top: none !important;
+    border-radius: 0 0 8px 8px !important;
+    padding: 1rem !important;
+}
+
+/* Audio recorder - comprehensive styling to remove black backgrounds */
+/* Target all possible container elements */
+div[data-testid="column"] > div > div[style*="audio"],
+div[data-testid="column"] iframe,
+div[data-testid="stVerticalBlock"] iframe {
+    background-color: #F3F6FA !important;
+}
+
+/* Target iframe content */
+iframe[title*="audio"],
+iframe[title*="streamlit"] {
+    background-color: transparent !important;
+}
+
+/* Remove backgrounds from all nested divs in the audio column */
+div[data-testid="column"]:last-child > div,
+div[data-testid="column"]:last-child > div > div,
+div[data-testid="column"]:last-child > div > div > div {
+    background-color: #F3F6FA !important;
+    border: none !important;
+}
+
+/* Hide any text/labels */
+div[data-testid="column"]:last-child p,
+div[data-testid="column"]:last-child span:not([class*="icon"]),
+div[data-testid="column"]:last-child label {
+    display: none !important;
+}
+
+/* Style buttons in the audio column */
+div[data-testid="column"]:last-child button {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 4px !important;
+}
+
+div[data-testid="column"]:last-child button:hover {
+    background-color: rgba(126, 87, 194, 0.1) !important;
+}
+
+/* Input columns alignment */
+div[data-testid="column"]:has(div[data-testid="stChatInput"]) {
+    display: flex;
+    align-items: flex-end;
+}
+
+/* Ensure chat input takes full width in its column */
+div[data-testid="stChatInput"] {
+    width: 100%;
+}
