@@ -142,8 +142,23 @@ def show_loading_screen():
     import base64
     from pathlib import Path
     
-    # Load GIF and encode to base64
-    gif_path = Path(__file__).parent / "assets" / "Saludo-Media-resolucion.gif"
+    # Try multiple possible paths for GIF file
+    possible_paths = [
+        Path(__file__).parent / "assets" / "Saludo-Media-resolucion.gif",
+        Path("/app/streamlit_app/assets/Saludo-Media-resolucion.gif"),
+        Path("streamlit_app/assets/Saludo-Media-resolucion.gif"),
+    ]
+    
+    gif_path = None
+    for path in possible_paths:
+        if path.exists():
+            gif_path = path
+            break
+    
+    if gif_path is None:
+        # GIF not found, skip loading screen
+        return
+    
     with open(gif_path, "rb") as f:
         gif_data = base64.b64encode(f.read()).decode()
     
@@ -224,7 +239,23 @@ def get_pigui_avatar():
     import base64
     from pathlib import Path
     
-    svg_path = Path(__file__).parent / "assets" / "PuguiChat-ziCgELVp.svg"
+    # Try multiple possible paths for SVG file
+    possible_paths = [
+        Path(__file__).parent / "assets" / "PuguiChat-ziCgELVp.svg",
+        Path("/app/streamlit_app/assets/PuguiChat-ziCgELVp.svg"),
+        Path("streamlit_app/assets/PuguiChat-ziCgELVp.svg"),
+    ]
+    
+    svg_path = None
+    for path in possible_paths:
+        if path.exists():
+            svg_path = path
+            break
+    
+    if svg_path is None:
+        # SVG not found, return None (will use default avatar)
+        return None
+    
     with open(svg_path, "rb") as f:
         svg_data = base64.b64encode(f.read()).decode()
     return f"data:image/svg+xml;base64,{svg_data}"
