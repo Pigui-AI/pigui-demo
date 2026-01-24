@@ -471,11 +471,29 @@ def load_css():
     """Load CSS from external file."""
     from pathlib import Path
     
-    css_file = Path(__file__).parent / "assets" / "styles.css"
-    with open(css_file, encoding="utf-8") as f:
-        css = f.read()
+    # Try multiple possible paths for CSS file
+    possible_paths = [
+        Path(__file__).parent / "assets" / "styles.css",  # Local development
+        Path("/app/streamlit_app/assets/styles.css"),     # Docker absolute path
+        Path("streamlit_app/assets/styles.css"),          # Docker relative path
+    ]
     
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    css_file = None
+    for path in possible_paths:
+        if path.exists():
+            css_file = path
+            break
+    
+    if css_file is None:
+        # CSS not found, continue without it
+        return
+    
+    try:
+        with open(css_file, encoding="utf-8") as f:
+            css = f.read()
+        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Could not load CSS from {css_file}: {e}")
 
 
 def main():
