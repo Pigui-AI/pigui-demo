@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY streamlit_chat_branch.py .
 
+# Copy assets folder
+COPY assets ./assets
+
 # Expose port 8080
 EXPOSE 8080
 

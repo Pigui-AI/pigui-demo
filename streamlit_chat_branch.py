@@ -141,21 +141,17 @@ def show_loading_screen():
     """Display custom loading screen with centered GIF."""
     import base64
     from pathlib import Path
+    import os
     
-    # Try multiple possible paths for GIF file
-    possible_paths = [
-        Path(__file__).parent / "assets" / "Saludo-Media-resolucion.gif",
-        Path("/app/streamlit_app/assets/Saludo-Media-resolucion.gif"),
-        Path("streamlit_app/assets/Saludo-Media-resolucion.gif"),
-    ]
+    # Determine base path - works for both local and Docker
+    if os.path.exists("/app/assets"):
+        # Docker environment (streamlit_app Dockerfile)
+        gif_path = Path("/app/assets/Saludo-Media-resolucion.gif")
+    else:
+        # Local development
+        gif_path = Path(__file__).parent / "assets" / "Saludo-Media-resolucion.gif"
     
-    gif_path = None
-    for path in possible_paths:
-        if path.exists():
-            gif_path = path
-            break
-    
-    if gif_path is None:
+    if not gif_path.exists():
         # GIF not found, skip loading screen
         return
     
@@ -238,21 +234,17 @@ def get_pigui_avatar():
     """Load Pigui SVG avatar as base64 data URL."""
     import base64
     from pathlib import Path
+    import os
     
-    # Try multiple possible paths for SVG file
-    possible_paths = [
-        Path(__file__).parent / "assets" / "PuguiChat-ziCgELVp.svg",
-        Path("/app/streamlit_app/assets/PuguiChat-ziCgELVp.svg"),
-        Path("streamlit_app/assets/PuguiChat-ziCgELVp.svg"),
-    ]
+    # Determine base path - works for both local and Docker
+    if os.path.exists("/app/assets"):
+        # Docker environment (streamlit_app Dockerfile)
+        svg_path = Path("/app/assets/PuguiChat-ziCgELVp.svg")
+    else:
+        # Local development
+        svg_path = Path(__file__).parent / "assets" / "PuguiChat-ziCgELVp.svg"
     
-    svg_path = None
-    for path in possible_paths:
-        if path.exists():
-            svg_path = path
-            break
-    
-    if svg_path is None:
+    if not svg_path.exists():
         # SVG not found, return None (will use default avatar)
         return None
     
@@ -501,21 +493,17 @@ def send_chat(system_only_messages: list[str] | None = None):
 def load_css():
     """Load CSS from external file."""
     from pathlib import Path
+    import os
     
-    # Try multiple possible paths for CSS file
-    possible_paths = [
-        Path(__file__).parent / "assets" / "styles.css",  # Local development
-        Path("/app/streamlit_app/assets/styles.css"),     # Docker absolute path
-        Path("streamlit_app/assets/styles.css"),          # Docker relative path
-    ]
+    # Determine base path - works for both local and Docker
+    if os.path.exists("/app/assets"):
+        # Docker environment (streamlit_app Dockerfile)
+        css_file = Path("/app/assets/styles.css")
+    else:
+        # Local development
+        css_file = Path(__file__).parent / "assets" / "styles.css"
     
-    css_file = None
-    for path in possible_paths:
-        if path.exists():
-            css_file = path
-            break
-    
-    if css_file is None:
+    if not css_file.exists():
         # CSS not found, continue without it
         return
     
