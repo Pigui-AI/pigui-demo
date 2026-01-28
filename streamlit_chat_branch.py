@@ -1,429 +1,194 @@
 import io
-import warnings
+import json
 import requests
 import streamlit as st
 from datetime import datetime
-from pathlib import Path
-import base64
-
-# Suppress warnings
-warnings.filterwarnings("ignore")
-
-# Page config to remove padding
-st.set_page_config(
-    page_title="Pigui AI Chat",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+from typing import Optional
 
 
-# API_URL_CHAT = "http://localhost:8000/ai/chat/branch"
-# API_URL_ASR = "http://localhost:8000/ai/asr"
-# API_URL_TTS = "http://localhost:8000/ai/tts"
+def hide_streamlit_elements():
+    """Ocultar elementos de Streamlit UI (Deploy button y opciones del menú)"""
+    hide_style = """
+        <style>
+        /* Ocultar el botón Deploy */
+        [data-testid="stToolbar"] button[kind="header"]:first-child,
+        button[data-testid="baseButton-header"]:has(span:contains("Deploy")),
+        header button:has([data-testid="stDeployButton"]),
+        [data-testid="stDeployButton"],
+        button[kind="header"][data-testid*="deploy"],
+        button[title="Deploy this app"] {
+            display: none !important;
+        }
+        
+        /* Ocultar opciones específicas del menú hamburger excepto Print y Record screencast */
+        [data-testid="stMainMenu"] li:has(a[href*="settings"]),
+        [data-testid="stMainMenu"] li:has(a[href*="about"]),
+        [data-testid="stMainMenu"] li:has(span:contains("Settings")),
+        [data-testid="stMainMenu"] li:has(span:contains("About")),
+        [data-testid="stMainMenu"] li:has(span:contains("Clear cache")),
+        [data-testid="stMainMenu"] li:has(span:contains("Rerun")),
+        [data-testid="stMainMenu"] li:has(span:contains("Report a bug")),
+        [data-testid="stMainMenu"] li:has(span:contains("Get help")) {
+            display: none !important;
+        }
+        
+        /* Reducir tamaño de fuente en el sidebar */
+        [data-testid="stSidebar"] {
+            font-size: 0.85rem !important;
+        }
+        
+        [data-testid="stSidebar"] h2 {
+            font-size: 1.1rem !important;
+        }
+        
+        [data-testid="stSidebar"] h3 {
+            font-size: 1rem !important;
+        }
+        
+        [data-testid="stSidebar"] .stButton button {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.5rem !important;
+            min-height: 2rem !important;
+        }
+        
+        [data-testid="stSidebar"] .stCaption {
+            font-size: 0.75rem !important;
+        }
+        
+        [data-testid="stSidebar"] p {
+            font-size: 0.85rem !important;
+        }
+        
+        /* Reducir tamaño del título principal */
+        h1 {
+            font-size: 1.8rem !important;
+        }
+        </style>
+    """
+    st.markdown(hide_style, unsafe_allow_html=True)
 
-API_URL_CHAT = "https://dev-apipiguibackend.pigui.ai/ai/chat/branch"
-API_URL_ASR = "https://dev-apipiguibackend.pigui.ai/ai/asr"
-API_URL_TTS = "https://dev-apipiguibackend.pigui.ai/ai/tts"
 
-
-TOPICS = {
-    "All topics": [
-        "Who are my most valuable customers?",
-        "What times they buy, where, and why?",
-        "Purchase frequency and average ticket?",
-    ],
-    "Customers & Behavior": [
-        "Who are my most valuable customers?",
-        "What times they buy, where, and why?",
-        "Purchase frequency and average ticket?",
-    ],
-    "Sales & Revenue": [
-        "What drives my highest revenue days?",
-        "Which products generate the most profit?",
-        "How can I increase average ticket size?",
-    ],
-    "Marketing & Campaigns": [
-        "Which campaigns bring the most visits?",
-        "Best times to launch a new promo?",
-        "Which channels drive repeat customers?",
-    ],
-    "Rewards & Loyalty": [
-        "Which rewards improve repeat visits?",
-        "Who redeems rewards the most?",
-        "How can I optimize points usage?",
-    ],
-    "Products & Services": [
-        "Which items are trending this month?",
-        "What products should I discontinue?",
-        "Which bundles could increase sales?",
-    ],
-    "Customer Experience": [
-        "What are the top customer complaints?",
-        "When do we receive the best feedback?",
-        "How can we reduce churn rate?",
-    ],
-    "Operations & Branch Performance": [
-        "Which hours are most efficient?",
-        "Where are operational bottlenecks?",
-        "How can we improve staff coverage?",
-    ],
-    "Growth & Strategy": [
-        "Where should we expand next?",
-        "What growth levers are underused?",
-        "Which segments offer the most growth?",
-    ],
-}
+# API URLs
+API_BASE_URL = "https://dev-apipiguibackend.pigui.ai"
+API_URL_CONVERSATIONS = f"{API_BASE_URL}/ai/conversations"
+API_URL_ASR = f"{API_BASE_URL}/ai/asr"
+API_URL_TTS = f"{API_BASE_URL}/ai/tts"
 
 
 def init_state():
-    # Get IDs from URL query parameters
+    """Inicializar estado de la sesión"""
     query_params = st.query_params
-    client_id = query_params.get("client_id", "")
-    branch_id = query_params.get("branch_id", "")
     
-    # Store in session state
-    st.session_state.setdefault("client_id", client_id)
-    st.session_state.setdefault("branch_id", branch_id)
+    # IDs desde URL
+    if "client_id" not in st.session_state:
+        st.session_state.client_id = query_params.get("client_id", "")
+    if "branch_id" not in st.session_state:
+        st.session_state.branch_id = query_params.get("branch_id", "")
+    
+    # User ID (en producción vendría del sistema de auth)
+    if "user_id" not in st.session_state:
+        st.session_state.user_id = query_params.get("user_id", st.session_state.client_id)
+    
+    # Conversación actual
+    st.session_state.setdefault("current_conversation_id", None)
     st.session_state.setdefault("messages", [])
-    st.session_state.setdefault("active_topic", "All topics")
-    st.session_state.setdefault("context_loaded", False)
-    st.session_state.setdefault("playing_audio", {})
+    st.session_state.setdefault("conversations_list", [])
+    st.session_state.setdefault("conversations_loaded", False)
 
 
-def reset_chat():
-    st.session_state.messages = []
-    st.session_state.context_loaded = False
-
-
-def process_audio_and_chat():
-    uploaded_file = st.session_state.get("audio_uploader")
-    if not uploaded_file:
-        return
-
-    with st.spinner("Processing uploaded audio..."):
-        audio_bytes = uploaded_file.read()
-        user_prompt = transcribe_audio(audio_bytes, uploaded_file.name, uploaded_file.type)
-
-    if user_prompt:
-        st.info(f"Transcribed from audio: {user_prompt}")
-        st.session_state.messages.append({"role": "user", "content": user_prompt})
-        # Immediately get response
-        with st.spinner("Thinking..."):
-            try:
-                answer, missing = send_chat()
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-                if missing:
-                    st.caption(f"Missing: {missing}")
-            except requests.RequestException as exc:
-                st.error(f"Error calling API: {exc}")
-
-
-def validate_ids():
-    """Validate that required IDs are present in URL parameters."""
-    if not st.session_state.client_id or not st.session_state.branch_id:
-        st.error("⚠️ Missing required parameters")
-        st.markdown("""
-        Please access this page with the required URL parameters:
-        
-        ```
-        http://localhost:8501/?client_id=YOUR_CLIENT_ID&branch_id=YOUR_BRANCH_ID
-        ```
-        
-        **Example:**
-        ```
-        http://localhost:8501/?client_id=939d59ae-43b0-4e21-89dd-d4aaed3d4fae&branch_id=6b90a72a-5aec-4da1-bfb9-eae3afd3395f
-        ```
-        """)
-        st.stop()
-
-
-def show_loading_screen():
-    """Display custom loading screen with centered GIF."""
-    import base64
-    from pathlib import Path
-    import os
-    
-    # Determine base path - works for both local and Docker
-    if os.path.exists("/app/assets"):
-        # Docker environment (streamlit_app Dockerfile)
-        gif_path = Path("/app/assets/Saludo-Media-resolucion.gif")
-    else:
-        # Local development
-        gif_path = Path(__file__).parent / "assets" / "Saludo-Media-resolucion.gif"
-    
-    if not gif_path.exists():
-        # GIF not found, skip loading screen
-        return
-    
-    with open(gif_path, "rb") as f:
-        gif_data = base64.b64encode(f.read()).decode()
-    
-    loading_html = f"""
-    <style>
-        .loading-container {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #F3F6FA;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }}
-        .loading-gif {{
-            max-width: 300px;
-            max-height: 300px;
-        }}
-    </style>
-    <div class="loading-container">
-        <img src="data:image/gif;base64,{gif_data}" class="loading-gif" alt="Loading...">
-    </div>
-    """
-    return st.markdown(loading_html, unsafe_allow_html=True)
-
-
-def load_initial_context():
-    """Load initial context from API endpoint on first load."""
-    if st.session_state.context_loaded:
-        return
-    
-    if not st.session_state.client_id or not st.session_state.branch_id:
-        return
-    
-    # Show custom loading screen
-    loading_placeholder = st.empty()
-    with loading_placeholder.container():
-        show_loading_screen()
-    
+def fetch_conversations(user_id: str, page: int = 1, page_size: int = 20):
+    """Obtener lista de conversaciones del usuario"""
     try:
-        initial_message = "Provide a brief overview of this branch's performance."
-        payload = {
-            "client_id": st.session_state.client_id,
-            "branch_id": st.session_state.branch_id,
-            "messages": [{"role": "user", "content": initial_message}],
+        params = {
+            "user_id": user_id,
+            "status": "active",
+            "page": page,
+            "page_size": page_size
         }
-        resp = requests.post(API_URL_CHAT, json=payload, timeout=30)
+        resp = requests.get(API_URL_CONVERSATIONS, params=params, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        data = data.get("data") or {}
-        answer = data.get("response") or "(No response)"
-        
-        st.session_state.messages.append({"role": "assistant", "content": answer})
-        st.session_state.context_loaded = True
-    except requests.RequestException as exc:
-        st.warning(f"Could not load initial context: {exc}")
-    finally:
-        loading_placeholder.empty()
-
-
-def send_prompt(prompt):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.spinner("Thinking..."):
-        try:
-            answer, missing = send_chat()
-            st.session_state.messages.append({"role": "assistant", "content": answer})
-            if missing:
-                st.caption(f"Missing: {missing}")
-        except requests.RequestException as exc:
-            st.error(f"Error calling API: {exc}")
-
-
-def get_pigui_avatar():
-    """Load Pigui SVG avatar as base64 data URL."""
-    import base64
-    from pathlib import Path
-    import os
-    
-    # Determine base path - works for both local and Docker
-    if os.path.exists("/app/assets"):
-        # Docker environment (streamlit_app Dockerfile)
-        svg_path = Path("/app/assets/PuguiChat-ziCgELVp.svg")
-    else:
-        # Local development
-        svg_path = Path(__file__).parent / "assets" / "PuguiChat-ziCgELVp.svg"
-    
-    if not svg_path.exists():
-        # SVG not found, return None (will use default avatar)
+        return data.get("data", {})
+    except Exception as e:
+        st.error(f"Error loading conversations: {e}")
         return None
-    
-    with open(svg_path, "rb") as f:
-        svg_data = base64.b64encode(f.read()).decode()
-    return f"data:image/svg+xml;base64,{svg_data}"
 
 
-def chat_view():
-    # Inject comprehensive CSS to fix all issues
-    st.markdown("""
-    <style>
-    /* REMOVE ALL TOP SPACING - AGGRESSIVE */
-    .main .block-container {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0 !important;
-    }
-    .stApp {
-        margin-top: -100px !important;
-    }
-    section[data-testid="stSidebar"] {
-        display: none !important;
-    }
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
-    div[data-testid="stVerticalBlock"] {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-    }
-    
-    /* VERY SMALL BUTTON TEXT - FORCE OVERRIDE */
-    .stButton > button,
-    button[kind="secondary"],
-    button[kind="primary"],
-    div[data-testid="stHorizontalBlock"] button {
-        font-size: 9px !important;
-        padding: 0.25rem 0.35rem !important;
-        min-height: 32px !important;
-        height: auto !important;
-        line-height: 1.0 !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-    }
-    
-    /* Transparent backgrounds */
-    div[data-testid="column"]:last-child > div {
-        background-color: transparent !important;
-    }
-    
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # This injects a custom class for the main container
-    st.markdown("<div class='main-container'>", unsafe_allow_html=True)
-    
-    # Load Pigui avatar
-    pigui_avatar = get_pigui_avatar()
-
-    st.title("Chat with Pigui about any topic related to your branch!")
-    st.caption("Choose what Pigui should focus on to help you make better decisions for this branch.")
-
-    # Topic selection
-    topic_cols = st.columns(len(TOPICS))
-    for i, topic_name in enumerate(TOPICS.keys()):
-        with topic_cols[i]:
-            is_active = st.session_state.active_topic == topic_name
-            if st.button(
-                topic_name,
-                key=f"topic_{i}",
-                use_container_width=True,
-                type="primary" if is_active else "secondary",
-            ):
-                st.session_state.active_topic = topic_name
-                st.rerun()
-
-    st.markdown("<hr class='chat-divider'>", unsafe_allow_html=True)
-
-    # Main layout for chat and suggestions
-    main_cols = st.columns([4, 1])
-    with main_cols[0]:
-        # Chat History
-        with st.container(height=400):
-            if not st.session_state.messages:
-                with st.chat_message("assistant", avatar=pigui_avatar):
-                    st.write(
-                        "Hi! I'm Pigui. I'm here to help you understand and "
-                        "improve this branch. What would you like to explore today?"
-                    )
-
-            for i, msg in enumerate(st.session_state.messages):
-                avatar = pigui_avatar if msg["role"] == "assistant" else None
-                with st.chat_message(msg["role"], avatar=avatar):
-                    st.write(msg["content"])
-                    
-                    # Add TTS button for assistant messages
-                    if msg["role"] == "assistant":
-                        audio_key = f"audio_{i}"
-                        is_playing = st.session_state.playing_audio.get(audio_key, False)
-                        
-                        button_label = "⏸️ Stop" if is_playing else "🔊 Listen"
-                        if st.button(button_label, key=f"tts_{i}"):
-                            if is_playing:
-                                st.session_state.playing_audio[audio_key] = False
-                                st.rerun()
-                            else:
-                                st.session_state.playing_audio[audio_key] = True
-                                synthesize_speech_streaming(msg["content"])
-                                st.session_state.playing_audio[audio_key] = False
-
-    with main_cols[1]:
-        st.write("")  # Spacer for alignment
-        active_questions = TOPICS.get(st.session_state.active_topic, [])
-        for q in active_questions:
-            if st.button(q, use_container_width=True, key=f"sugg_{q}"):
-                send_prompt(q)
-                st.rerun()
-
-    # Close the custom class div
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # Audio input section
-    with st.expander("🎤 Upload Audio (Optional)", expanded=False):
-        audio_file = st.file_uploader(
-            "Upload audio to transcribe",
-            type=["wav", "mp3", "m4a", "ogg", "webm"],
-            key="audio_uploader"
-        )
-        
-        if audio_file is not None:
-            # Create unique identifier for this audio file
-            audio_id = f"{audio_file.name}_{audio_file.size}"
-            
-            # Check if we already processed this audio file
-            if "last_processed_audio" not in st.session_state:
-                st.session_state.last_processed_audio = None
-            
-            if st.session_state.last_processed_audio != audio_id:
-                with st.spinner("Transcribing audio..."):
-                    audio_bytes = audio_file.read()
-                    transcribed_text = transcribe_audio(
-                        audio_bytes,
-                        audio_file.name,
-                        audio_file.type
-                    )
-                    
-                    if transcribed_text:
-                        # Mark this audio as processed
-                        st.session_state.last_processed_audio = audio_id
-                        
-                        # Send transcribed text as message
-                        st.session_state.messages.append({
-                            "role": "user",
-                            "content": transcribed_text
-                        })
-                        
-                        with st.spinner("Pigui is thinking..."):
-                            try:
-                                answer, missing = send_chat()
-                                st.session_state.messages.append({
-                                    "role": "assistant",
-                                    "content": answer
-                                })
-                                
-                                if missing:
-                                    st.caption(f"Missing: {missing}")
-                            except requests.RequestException as exc:
-                                st.error(f"Error: {exc}")
-                        
-                        st.rerun()
-    
-    # Text input (always available)
-    if user_prompt := st.chat_input("Ask Pigui anything you'd like - I'm here to help!"):
-        send_prompt(user_prompt)
-        st.rerun()
+def fetch_conversation_detail(conversation_id: str):
+    """Obtener detalle completo de una conversación"""
+    try:
+        url = f"{API_URL_CONVERSATIONS}/{conversation_id}"
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("data", {})
+    except Exception as e:
+        st.error(f"Error loading conversation: {e}")
+        return None
 
 
-def transcribe_audio(audio_bytes: bytes, filename: str, content_type: str) -> str | None:
+def start_new_conversation(user_id: str, message: str, client_id: str, branch_id: str):
+    """Iniciar una nueva conversación"""
+    try:
+        url = f"{API_URL_CONVERSATIONS}/start"
+        params = {
+            "user_id": user_id,
+            "message": message,
+            "context_type": "contextual",
+            "client_id": client_id,
+            "branch_id": branch_id
+        }
+        resp = requests.post(url, params=params, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("data", {})
+    except Exception as e:
+        st.error(f"Error starting conversation: {e}")
+        return None
+
+
+def continue_conversation(conversation_id: str, message: str):
+    """Continuar una conversación existente"""
+    try:
+        url = f"{API_URL_CONVERSATIONS}/{conversation_id}/continue"
+        payload = {
+            "conversation_id": conversation_id,
+            "message": message,
+            "model": "gpt-4-1106-preview",
+            "temperature": 0.7,
+            "max_tokens": 2000
+        }
+        resp = requests.post(url, json=payload, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("data", {})
+    except Exception as e:
+        st.error(f"Error continuing conversation: {e}")
+        return None
+
+
+def load_conversation(conversation_id: str):
+    """Cargar una conversación y actualizar el estado"""
+    conversation = fetch_conversation_detail(conversation_id)
+    if conversation:
+        st.session_state.current_conversation_id = conversation_id
+        st.session_state.messages = [
+            {"role": msg["role"], "content": msg["content"]}
+            for msg in conversation.get("messages", [])
+        ]
+        return True
+    return False
+
+
+def start_new_chat():
+    """Iniciar un nuevo chat (limpiar conversación actual)"""
+    st.session_state.current_conversation_id = None
+    st.session_state.messages = []
+    st.session_state.conversations_loaded = False
+
+
+def transcribe_audio(audio_bytes: bytes, filename: str, content_type: str) -> Optional[str]:
+    """Transcribir audio a texto"""
     files = {"file": (filename, audio_bytes, content_type)}
     try:
         resp = requests.post(API_URL_ASR, files=files, timeout=20)
@@ -437,6 +202,7 @@ def transcribe_audio(audio_bytes: bytes, filename: str, content_type: str) -> st
 
 
 def synthesize_speech(text: str):
+    """Sintetizar texto a voz"""
     payload = {
         "text": text,
         "model": "tts-1-hd",
@@ -456,83 +222,173 @@ def synthesize_speech(text: str):
         st.error(f"Error during voice synthesis: {e}")
 
 
-def synthesize_speech_streaming(text: str):
-    """Streaming TTS that generates and plays audio progressively."""
-    payload = {
-        "text": text,
-        "model": "tts-1-hd",
-        "voice": "nova",
-        "format": "mp3",
-        "speed": 1.0,
-    }
-    try:
-        with requests.post(API_URL_TTS, json=payload, timeout=60, stream=True) as resp:
-            resp.raise_for_status()
-            audio_buffer = io.BytesIO()
-            
-            # Stream chunks and build audio progressively
-            for chunk in resp.iter_content(chunk_size=8192):
-                if chunk:
-                    audio_buffer.write(chunk)
-            
-            # Play complete audio with autoplay
-            audio_buffer.seek(0)
-            st.audio(audio_buffer.getvalue(), format="audio/mp3", autoplay=True)
-    except requests.RequestException as e:
-        st.error(f"Error during streaming synthesis: {e}")
-
-
-def send_chat(system_only_messages: list[str] | None = None):
-    payload_messages = list(st.session_state.messages)
-    if system_only_messages:
-        payload_messages.append({"role": "user", "content": system_only_messages[0]})
-
-    payload = {
-        "client_id": st.session_state.client_id,
-        "branch_id": st.session_state.branch_id,
-        "messages": payload_messages,
-    }
-    resp = requests.post(API_URL_CHAT, json=payload, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    data = data.get("data") or {}
-    answer = data.get("response") or "(No response)"
-    missing = data.get("missing")
-    return answer, missing
-
-
-def load_css():
-    """Load CSS from external file."""
-    from pathlib import Path
-    import os
+def process_message(message: str):
+    """Procesar un mensaje (iniciar o continuar conversación)"""
+    user_id = st.session_state.user_id
+    client_id = st.session_state.client_id
+    branch_id = st.session_state.branch_id
     
-    # Determine base path - works for both local and Docker
-    if os.path.exists("/app/assets"):
-        # Docker environment (streamlit_app Dockerfile)
-        css_file = Path("/app/assets/styles.css")
+    if st.session_state.current_conversation_id:
+        # Continuar conversación existente
+        result = continue_conversation(st.session_state.current_conversation_id, message)
+        if result:
+            return result.get("response"), result.get("conversation_id")
     else:
-        # Local development
-        css_file = Path(__file__).parent / "assets" / "styles.css"
+        # Iniciar nueva conversación
+        result = start_new_conversation(user_id, message, client_id, branch_id)
+        if result:
+            st.session_state.current_conversation_id = result.get("conversation_id")
+            return result.get("response"), result.get("conversation_id")
     
-    if not css_file.exists():
-        # CSS not found, continue without it
-        return
+    return None, None
+
+
+def chat_view():
+    """Vista principal del chat"""
+    st.title("Business Intelligence Chat - Pigui AI")
+    st.caption("Ask about your products, sales, customer feedback, and business performance")
     
-    try:
-        with open(css_file, encoding="utf-8") as f:
-            css = f.read()
-        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Could not load CSS from {css_file}: {e}")
+    # Cargar avatar personalizado
+    avatar_path = "scripts/assets/PuguiChat-ziCgELVp.svg"
+
+    with st.sidebar:
+        # Cargar conversaciones si no están cargadas
+        if not st.session_state.conversations_loaded:
+            with st.spinner("Loading conversations..."):
+                conv_data = fetch_conversations(st.session_state.user_id)
+                if conv_data:
+                    st.session_state.conversations_list = conv_data.get("conversations", [])
+                    st.session_state.conversations_loaded = True
+        
+        # Botón para nueva conversación (siempre visible)
+        if st.button("➕ New Conversation", use_container_width=True, type="primary"):
+            start_new_chat()
+            st.rerun()
+        
+        st.divider()
+        
+        # Sección 1: Historial de Conversaciones (colapsable)
+        total_convs = len(st.session_state.conversations_list)
+        with st.expander(f"📜 Conversation History ({total_convs})", expanded=False):
+            # Mostrar lista de conversaciones
+            if st.session_state.conversations_list:
+                for conv in st.session_state.conversations_list:
+                    conv_id = conv["id"]
+                    title = conv.get("title") or "Untitled conversation"
+                    message_count = conv.get("message_count", 0)
+                    
+                    # Indicador si es la conversación actual
+                    is_current = conv_id == st.session_state.current_conversation_id
+                    button_type = "primary" if is_current else "secondary"
+                    
+                    # Formatear título con info (asegurar que title no sea None)
+                    title_str = str(title) if title else "Untitled"
+                    truncated_title = title_str[:40] if len(title_str) > 40 else title_str
+                    display_title = f"{'🔵 ' if is_current else ''}{truncated_title}"
+                    if len(title_str) > 40:
+                        display_title += "..."
+                    display_caption = f"{message_count} msgs"
+                    
+                    col1, col2 = st.columns([4, 1])
+                    with col1:
+                        if st.button(
+                            display_title,
+                            key=f"conv_{conv_id}",
+                            use_container_width=True,
+                            type=button_type,
+                            help=f"{message_count} messages"
+                        ):
+                            if load_conversation(conv_id):
+                                st.rerun()
+                    with col2:
+                        st.caption(display_caption)
+            else:
+                st.info("No previous conversations")
+        
+        st.divider()
+        
+        # Sección 2: Preguntas Predefinidas (colapsable)
+        with st.expander("💡 Quick Questions", expanded=False):
+            st.caption("Click to ask:")
+            
+            predefined_questions = [
+                "What is my most popular product?",
+                "Which product has the best customer reviews?",
+                "Show me my recent sales summary",
+                "What feedback have customers given?",
+                "What are my top-selling services?",
+                "How is my business performing?",
+                "Which products need more inventory?",
+                "What are customers saying about my branch?",
+            ]
+            
+            for question in predefined_questions:
+                if st.button(question, key=f"predefined_{question}", use_container_width=True):
+                    # Agregar mensaje del usuario
+                    st.session_state.messages.append({"role": "user", "content": question})
+                    
+                    # Procesar mensaje
+                    with st.spinner("Thinking..."):
+                        response, conv_id = process_message(question)
+                        if response:
+                            st.session_state.messages.append({"role": "assistant", "content": response})
+                            st.session_state.conversations_loaded = False  # Recargar lista
+                    st.rerun()
+
+    # Mostrar historial de mensajes
+    for i, msg in enumerate(st.session_state.messages):
+        avatar = avatar_path if msg["role"] == "assistant" else None
+        with st.chat_message(msg["role"], avatar=avatar):
+            st.write(msg["content"])
+            if msg["role"] == "assistant":
+                if st.button("🔊 Play", key=f"play_{i}"):
+                    with st.spinner("Generating audio..."):
+                        synthesize_speech(msg["content"])
+
+    # Saludo inicial si no hay mensajes
+    if not st.session_state.messages and not st.session_state.current_conversation_id:
+        with st.spinner("Loading greeting..."):
+            response, conv_id = process_message("Hello")
+            if response:
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.session_state.conversations_loaded = False
+                st.rerun()
+
+    # Input del usuario
+    if user_prompt := st.chat_input("Ask me anything..."):
+        # Agregar mensaje del usuario
+        st.session_state.messages.append({"role": "user", "content": user_prompt})
+        
+        with st.chat_message("user"):
+            st.write(user_prompt)
+
+        # Procesar mensaje
+        with st.spinner("Thinking..."):
+            response, conv_id = process_message(user_prompt)
+            if response:
+                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.session_state.conversations_loaded = False  # Recargar lista
+                st.rerun()
 
 
 def main():
-    st.set_page_config(layout="wide")
-    load_css()
-
+    """Función principal"""
+    hide_streamlit_elements()
     init_state()
-    validate_ids()
-    load_initial_context()
+    
+    # Validar parámetros requeridos
+    if not st.session_state.client_id or not st.session_state.branch_id:
+        st.error("⚠️ Missing required parameters")
+        st.markdown("""
+        Please provide both `client_id` and `branch_id` in the URL.
+        
+        **Example:**
+        ```
+        http://localhost:8501/?client_id=939d59ae-43b0-4e21-89dd-d4aaed3d4fae&branch_id=905d26a6-b946-4dd6-8b20-f0ae04d182ac
+        ```
+        """)
+        st.stop()
+    
     chat_view()
 
 
