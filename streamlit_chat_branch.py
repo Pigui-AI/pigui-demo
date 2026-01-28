@@ -105,7 +105,7 @@ def fetch_conversations(user_id: str, page: int = 1, page_size: int = 20):
             "page": page,
             "page_size": page_size
         }
-        resp = requests.get(API_URL_CONVERSATIONS, params=params, timeout=10)
+        resp = requests.get(API_URL_CONVERSATIONS, params=params, timeout=60)
         resp.raise_for_status()
         data = resp.json()
         return data.get("data", {})
@@ -118,7 +118,7 @@ def fetch_conversation_detail(conversation_id: str):
     """Obtener detalle completo de una conversación"""
     try:
         url = f"{API_URL_CONVERSATIONS}/{conversation_id}"
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, timeout=60)
         resp.raise_for_status()
         data = resp.json()
         return data.get("data", {})
@@ -138,7 +138,7 @@ def start_new_conversation(user_id: str, message: str, client_id: str, branch_id
             "client_id": client_id,
             "branch_id": branch_id
         }
-        resp = requests.post(url, params=params, timeout=30)
+        resp = requests.post(url, params=params, timeout=120)
         resp.raise_for_status()
         data = resp.json()
         return data.get("data", {})
@@ -156,9 +156,9 @@ def continue_conversation(conversation_id: str, message: str):
             "message": message,
             "model": "gpt-4-1106-preview",
             "temperature": 0.7,
-            "max_tokens": 2000
+            "max_tokens": 1024
         }
-        resp = requests.post(url, json=payload, timeout=30)
+        resp = requests.post(url, json=payload, timeout=120)
         resp.raise_for_status()
         data = resp.json()
         return data.get("data", {})
@@ -248,8 +248,18 @@ def chat_view():
     st.title("Business Intelligence Chat - Pigui AI")
     st.caption("Ask about your products, sales, customer feedback, and business performance")
     
-    # Cargar avatar personalizado
-    avatar_path = "scripts/assets/PuguiChat-ziCgELVp.svg"
+    # Cargar avatar personalizado - buscar en múltiples ubicaciones
+    import os
+    possible_paths = [
+        "scripts/assets/PuguiChat-ziCgELVp.svg",  # Local
+        "assets/PuguiChat-ziCgELVp.svg",  # Docker
+        "./assets/PuguiChat-ziCgELVp.svg",  # Docker alternativo
+    ]
+    avatar_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            avatar_path = path
+            break
 
     with st.sidebar:
         # Cargar conversaciones si no están cargadas
