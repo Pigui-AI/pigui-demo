@@ -67,7 +67,7 @@ def hide_streamlit_elements():
 
 
 # API URLs
-API_BASE_URL = "https://backdev.pigui.ai/"
+API_BASE_URL = "https://api-pigui-backend-prod-221854109597.europe-west1.run.app/"
 API_URL_CONVERSATIONS = f"{API_BASE_URL}/ai/conversations"
 API_URL_ASR = f"{API_BASE_URL}/ai/asr"
 API_URL_TTS = f"{API_BASE_URL}/ai/tts"
