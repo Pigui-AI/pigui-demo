@@ -3,11 +3,51 @@ import requests
 import streamlit as st
 from typing import Optional
 
+st.set_page_config(
+    layout="wide",
+    initial_sidebar_state="expanded",
+    page_title="Chat Pigui",
+    page_icon="💬"
+)
+
 
 def hide_streamlit_elements():
     """Ocultar elementos de Streamlit UI (Deploy button y opciones del menú)"""
     hide_style = """
         <style>
+        /* Forzar tema oscuro */
+        :root {
+            color-scheme: dark !important;
+        }
+        
+        body, .stApp {
+            background-color: #0E1117 !important;
+            color: #FAFAFA !important;
+        }
+        
+        [data-testid="stAppViewContainer"] {
+            background-color: #0E1117 !important;
+        }
+        
+        [data-testid="stHeader"] {
+            background-color: #0E1117 !important;
+        }
+        
+        [data-testid="stSidebar"] {
+            background-color: #262730 !important;
+        }
+        
+        /* Forzar modo wide pero centrar contenido */
+        .main .block-container,
+        section.main > div.block-container,
+        [data-testid="stAppViewContainer"] > section > div.block-container {
+            max-width: 1200px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+        }
+
         /* Ocultar el botón Deploy */
         [data-testid="stToolbar"] button[kind="header"]:first-child,
         button[data-testid="baseButton-header"]:has(span:contains("Deploy")),
@@ -62,6 +102,34 @@ def hide_streamlit_elements():
             font-size: 1.8rem !important;
         }
         </style>
+        
+        <script>
+        // Forzar centrado del contenido
+        function centerContent() {
+            const containers = document.querySelectorAll('.block-container, [class*="block-container"]');
+            containers.forEach(container => {
+                container.style.maxWidth = '1200px';
+                container.style.marginLeft = 'auto';
+                container.style.marginRight = 'auto';
+                container.style.paddingLeft = '2rem';
+                container.style.paddingRight = '2rem';
+            });
+        }
+        
+        // Ejecutar al cargar y después de cada actualización
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', centerContent);
+        } else {
+            centerContent();
+        }
+        
+        // Observar cambios en el DOM
+        const observer = new MutationObserver(centerContent);
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Ejecutar periódicamente como respaldo
+        setInterval(centerContent, 100);
+        </script>
     """
     st.markdown(hide_style, unsafe_allow_html=True)
 
