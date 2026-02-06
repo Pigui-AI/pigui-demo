@@ -15,26 +15,66 @@ def hide_streamlit_elements():
     """Ocultar elementos de Streamlit UI (Deploy button y opciones del menú)"""
     hide_style = """
         <style>
-        /* Forzar tema oscuro */
+        /* Forzar tema oscuro globalmente */
         :root {
             color-scheme: dark !important;
+            --background-color: #0E1117 !important;
+            --secondary-background-color: #262730 !important;
+            --text-color: #FAFAFA !important;
         }
         
-        body, .stApp {
+        /* Forzar fondo oscuro en todos los contenedores principales */
+        body, .stApp, [data-testid="stAppViewContainer"], 
+        section[data-testid="stMain"], .main,
+        [data-testid="stHeader"], header {
             background-color: #0E1117 !important;
             color: #FAFAFA !important;
         }
         
-        [data-testid="stAppViewContainer"] {
-            background-color: #0E1117 !important;
-        }
-        
-        [data-testid="stHeader"] {
-            background-color: #0E1117 !important;
-        }
-        
-        [data-testid="stSidebar"] {
+        /* Sidebar oscuro */
+        [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
             background-color: #262730 !important;
+        }
+        
+        /* Inputs y text areas oscuros */
+        input, textarea, [data-baseweb="input"], [data-baseweb="textarea"] {
+            background-color: #262730 !important;
+            color: #FAFAFA !important;
+            border-color: #4A4A4A !important;
+        }
+        
+        /* Chat input oscuro y redondeado */
+        [data-testid="stChatInput"], [data-testid="stChatInput"] textarea {
+            background-color: #262730 !important;
+            color: #FAFAFA !important;
+            border-radius: 1.5rem !important;
+        }
+        
+        [data-testid="stChatInput"] > div {
+            border-radius: 1.5rem !important;
+        }
+        
+        /* Mensajes de chat oscuros */
+        [data-testid="stChatMessage"] {
+            background-color: #1E1E1E !important;
+        }
+        
+        /* Botones con tema oscuro */
+        button, [data-testid="baseButton-secondary"] {
+            background-color: #262730 !important;
+            color: #FAFAFA !important;
+            border-color: #4A4A4A !important;
+        }
+        
+        /* Expanders oscuros */
+        [data-testid="stExpander"] {
+            background-color: #262730 !important;
+            border-color: #4A4A4A !important;
+        }
+        
+        /* Dividers oscuros */
+        hr {
+            border-color: #4A4A4A !important;
         }
         
         /* Forzar modo wide pero centrar contenido */
