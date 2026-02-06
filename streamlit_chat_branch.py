@@ -67,7 +67,7 @@ def hide_streamlit_elements():
 
 
 # API URLs
-API_BASE_URL = "https://backdev.pigui.ai/"
+API_BASE_URL = "http://localhost:8000"
 API_URL_CONVERSATIONS = f"{API_BASE_URL}/ai/conversations"
 API_URL_ASR = f"{API_BASE_URL}/ai/asr"
 API_URL_TTS = f"{API_BASE_URL}/ai/tts"
@@ -135,6 +135,18 @@ def start_new_conversation(user_id: str, message: str, client_id: str, branch_id
         resp.raise_for_status()
         data = resp.json()
         return data.get("data", {})
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 500:
+            error_text = e.response.text if hasattr(e.response, 'text') else str(e)
+            if "ForeignKeyViolationError" in error_text or "foreign key constraint" in error_text:
+                st.error("❌ **No se puede iniciar el servicio de chat**")
+                st.warning(f"⚠️ El usuario (ID: `{user_id}`) o la sucursal (ID: `{branch_id}`) no son válidos en la base de datos.")
+                st.info("💡 Verifica que el usuario y la sucursal existan antes de iniciar una conversación.")
+            else:
+                st.error(f"Error del servidor: {e}")
+        else:
+            st.error(f"Error HTTP {e.response.status_code}: {e}")
+        return None
     except Exception as e:
         st.error(f"Error starting conversation: {e}")
         return None
