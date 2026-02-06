@@ -16,10 +16,6 @@ gatherUsageStats = false
 [runner]
 fastReruns = true
 
-# Personalización del menú - ocultar opciones excepto Print y Record screencast
-[deprecation]
-showPyplotGlobalUse = false
-
 [theme]
 # Tema oscuro por defecto
 base = "dark"
@@ -27,7 +23,3 @@ primaryColor = "#FF4B4B"
 backgroundColor = "#0E1117"
 secondaryBackgroundColor = "#262730"
 textColor = "#FAFAFA"
-
-[layout]
-# Modo wide por defecto
-wide = true
