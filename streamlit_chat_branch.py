@@ -175,7 +175,7 @@ def hide_streamlit_elements():
 
 
 # API URLs
-API_BASE_URL = "https://backstagg.pigui.ai/"
+API_BASE_URL = "https://backstagg.pigui.ai"
 API_URL_CONVERSATIONS = f"{API_BASE_URL}/ai/conversations"
 API_URL_ASR = f"{API_BASE_URL}/ai/asr"
 API_URL_TTS = f"{API_BASE_URL}/ai/tts"
